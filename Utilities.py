@@ -233,7 +233,6 @@ class PyQUBO_Helpers:
             coeff = np.power(coeff, powers)
 
             # upper = np.sum(coeff)
-
             c = low
 
             # now coeff is an array of coeffs for a single element of x.
@@ -355,6 +354,17 @@ class PyQUBO_Helpers:
         return max_norm
 
 
+def Compile(problem, qubo=True):
+
+    compiled = problem.compile()
+
+    if qubo is False:
+        compiled = compiled.to_ising(index_labels=True)
+    else:
+        compiled = compiled.to_qubo(index_labels=True)
+    
+    return compiled
+
 # TODO: for ising as well
 def Dict_to_Mat(qubo_dict):
     keylist = list(qubo_dict.keys())
@@ -368,7 +378,8 @@ def Dict_to_Mat(qubo_dict):
     # qubo_mat = sp.Matrix(qubo_mat)
     return qubo_mat
 
-
+def Embedder(problem):
+    return 0
 
 ###### Radio/telco -related functions:
 def Channel_Rayleigh(no_users, no_transmit, scale=None):

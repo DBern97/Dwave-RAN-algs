@@ -27,7 +27,7 @@ class Problemv2:
         self.EVM = self.Helpers.EVM(self.xtilde, self.s)
         self.Max = self.Helpers.Max_Norm_LP
     
-    def Get_Problem(self, problem, penalties):
+    def Get_Problem(self, problem, term_penalties):
         
         valid_problems = {'L2', 'EVM', 'MAX', 'PAPR', 'FULL'}
 
@@ -36,9 +36,9 @@ class Problemv2:
 
         valid_fun = {'L2' :  self.L2, 
                     'EVM' :  self.EVM,
-                    'MAX' :  self.Max(self.xtilde, penalties[0]),
-                    'PAPR':  self.Max(self.xtilde, penalties[0]) - penalties[1]*self.L2, 
-                    'FULL':  self.Max(self.xtilde, penalties[0]) - penalties[1]*self.L2 + penalties[2]*self.EVM
+                    'MAX' :  self.Max(self.xtilde, term_penalties[0]),
+                    'PAPR':  self.Max(self.xtilde, term_penalties[0]) - term_penalties[1]*self.L2, 
+                    'FULL':  self.Max(self.xtilde, term_penalties[0]) - term_penalties[1]*self.L2 + term_penalties[2]*self.EVM
                     }
         
         problem = valid_fun[problem]
