@@ -9,8 +9,8 @@ import matplotlib.gridspec as gridspec
 from sympy.physics.quantum import TensorProduct
 import itertools 
 
-from Utilities import Channel_Rayleigh, Gauss_noise
-from Utilities import PyQUBO_Helpers
+from Radio import Channel_Rayleigh, Gauss_noise
+from PyQubo_formulation import PyQUBO_Helpers
 
 
 class Problemv2:
@@ -37,8 +37,8 @@ class Problemv2:
         valid_fun = {'L2' :  self.L2, 
                     'EVM' :  self.EVM,
                     'MAX' :  self.Max(self.xtilde, term_penalties[0]),
-                    'PAPR':  self.Max(self.xtilde, term_penalties[0]) - term_penalties[1]*self.L2, 
-                    'FULL':  self.Max(self.xtilde, term_penalties[0]) - term_penalties[1]*self.L2 + term_penalties[2]*self.EVM
+                    'PAPR':  self.Max(self.xtilde, term_penalties[0]) - self.L2, 
+                    'FULL':  self.Max(self.xtilde, term_penalties[0]) - self.L2 + term_penalties[1]*self.EVM
                     }
         
         problem = valid_fun[problem]
