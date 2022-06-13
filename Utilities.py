@@ -18,16 +18,7 @@ from Radio import *
 
 
 
-def Compile(problem, qubo=True):
 
-    compiled = problem.compile()
-
-    if qubo is False:
-        compiled = compiled.to_ising(index_labels=True)
-    else:
-        compiled = compiled.to_qubo(index_labels=True)
-    
-    return compiled
 
 # TODO: for ising as well
 def Dict_to_Mat(qubo_dict):
@@ -56,14 +47,20 @@ def quad_error(sample, variables):
     check if quadratisation was respected. Checks if
     qk*ql == zkl.
 
-    Returns a realtive error for given sample.
+    Returns a relative error for given sample.
     """
     
-    combinations = list(itertools.combinations(variables, 2))
-
+    all_combos = list(itertools.combinations(variables, 2))
+  
+    all_keys = list(sample.keys())
+    
     res = []
-    for pair in combinations:
-        res.append(sample[pair[0]]*sample[pair[1]] == sample[pair[0]+' * '+pair[1]])
+    for pair in all_combos:
+        quad = pair[0]+' * '+pair[1]
+        try:
+            res.append(sample[pair[0]]*sample[pair[1]] == sample[quad])
+        except:
+            all_combos.remove(pair)
 
     res = np.array(res)
     res = res.astype(int)

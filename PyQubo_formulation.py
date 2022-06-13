@@ -182,7 +182,7 @@ def Max_Norm_LP(ytilde, gamma, muparams, kparams):
     karr = float_approx(karr, kdomain)
 
     # write each constraint into a vector
-    term = np.zeros(len(ytilde), dtype=object)
+    term = np.zeros(len(ytilde), dtype='object')
     for i in range(len(ytilde)):
         term[i] = (ytilde[i]**2 - muarr + karr)**2
 
@@ -192,6 +192,17 @@ def Max_Norm_LP(ytilde, gamma, muparams, kparams):
     max_norm = muarr + gamma*sum(term)
 
     return max_norm
+
+def Compile(problem, qubo=True):
+
+    compiled = problem.compile()
+
+    if qubo is False:
+        compiled = compiled.to_ising(index_labels=True)
+    else:
+        compiled = compiled.to_qubo(index_labels=True)
+    
+    return compiled
 
 if __name__ == "__main__":
     # trial = PyQUBO_Helpers(2,4)
