@@ -31,9 +31,10 @@ def float_approx(x, domain):
     nq = len(x)
     
     low, high = domain
+    low = np.abs(low)
     
     # scale
-    c = (high - low) / 2
+    c = (high + low) / 2
 
     # Powers of the binary vars
     powers = np.linspace(0, -int(nq-1), nq, dtype=int)
@@ -42,7 +43,7 @@ def float_approx(x, domain):
     coeff = 2*np.ones(nq)
     coeff = np.power(coeff, powers)
 
-    approx = c*np.dot(coeff, x) + low
+    approx = c*np.dot(coeff, x) - low
 
     return approx
 
@@ -103,6 +104,7 @@ def EVM(x, s, noise=True):
 
     H = sp.Matrix(Channel_Rayleigh(no_users, no_transmit))
 
+    # TODO: also adjust for only real xtilde
     T = sp.ones(2)
     T[0,1] = -1
     ID = sp.eye(2)
@@ -127,33 +129,43 @@ def EVM(x, s, noise=True):
 
     return EVM
 
-def time_domain(xtilde):
+def time_domain(xtilde, only_real=False):
     """
     Given 'xtilde' (e.g. pyQubo array, but float arr should also work)
     understood as an array with its real and imaginary parts stacked
     as xtilde=[real, imag], return its IDFT.
     """
 
-    size = int(len(xtilde)/2)
+    if only_real is False:
+        size = int(len(xtilde)/2)
 
-    # important to scale so that F is unitary
-    F = np.around(dft(size, scale='sqrtn'), decimals=4) #TODO: handle accuracy as a parameter when calling the functions
-    F = F.T.conj()
-    F = sp.Matrix(F)
+        # important to scale so that F is unitary
+        F = np.around(dft(size, scale='sqrtn'), decimals=4) #TODO: handle accuracy as a parameter when calling the functions
+        F = F.T.conj()
+        F = sp.Matrix(F)
 
-    # Create re/im block matrix
-    F_re = sp.re(F)
-    F_im = sp.im(F)
+        # Create re/im block matrix
+        F_re = sp.re(F)
+        F_im = sp.im(F)
 
-    T = sp.ones(2)
-    T[0,1] = -1
-    ID = sp.eye(2)
-    T = T - ID
+        T = sp.ones(2)
+        T[0,1] = -1
+        ID = sp.eye(2)
+        T = T - ID
 
-    # rewriting F s.t. real and imaginary parts can be treated 'separately'
-    F = sp.Matrix(TensorProduct(T, F_im)) + sp.Matrix(TensorProduct(ID, F_re))
-    F = np.array(F, dtype=float)
-    F = pq.Array(F)
+        # rewriting F s.t. real and imaginary parts can be treated 'separately'
+        F = sp.Matrix(TensorProduct(T, F_im)) + sp.Matrix(TensorProduct(ID, F_re))
+        F = np.array(F, dtype=float)
+        F = pq.Array(F)
+
+    else:
+        size = int(len(xtilde))
+
+        F = np.around(dft(size, scale='sqrtn'), decimals=4) 
+        F = F.T.conj()
+        F = F.real
+        F = pq.Array(F)
+
 
     # pyqubo syntax
     ytilde = F.matmul(xtilde)

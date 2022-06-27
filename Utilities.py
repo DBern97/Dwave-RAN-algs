@@ -47,27 +47,42 @@ def quad_error(sample, variables):
     check if quadratisation was respected. Checks if
     qk*ql == zkl.
 
-    Returns a relative error for given sample.
+    Returns a relative error for given sample. 
+    (as well as a list of problematic combinations
+     dtype=str, and a list of all combinations.)
     """
     
     all_combos = list(itertools.combinations(variables, 2))
   
-    all_keys = list(sample.keys())
+    # all_keys = list(sample.keys())
     
     res = []
+    problematic = []
+
     for pair in all_combos:
+
         quad = pair[0]+' * '+pair[1]
+
         try:
             res.append(sample[pair[0]]*sample[pair[1]] == sample[quad])
         except:
             all_combos.remove(pair)
+        
+        if res[-1] == False:
+            problematic.append(quad)
+        else:
+            continue
 
     res = np.array(res)
     res = res.astype(int)
     
     error = np.count_nonzero(res==0) / len(res)
     
-    return error
+    return error, problematic, all_combos
+
+# def get_bit_string(samples, bin_vars):
+
+#     return bit_string
 
 def nq_embedding(chains):
     return len(list(itertools.chain(*chains)))
@@ -80,5 +95,5 @@ def create_s(length):
 
     return real + im*1J
 
-def Embedder(problem):
+def Embedder(problem): # TODO:
     return 0
