@@ -12,6 +12,7 @@ from sympy.physics.quantum import TensorProduct
 from scipy.linalg import dft
 
 import itertools 
+import random
 
 from Radio import *
 
@@ -33,7 +34,7 @@ def Dict_to_Mat(qubo_dict):
     # qubo_mat = sp.Matrix(qubo_mat)
     return qubo_mat
 
-def chain(embedding):
+def Chain(embedding):
     chains = list(embedding[0].values())
 
     chain_lengths = []
@@ -41,7 +42,7 @@ def chain(embedding):
         chain_lengths.append(len(chain))
     return chains, chain_lengths
 
-def quad_error(sample, variables):
+def Quad_Error(sample, variables):
     """
     Given a result sample and list of variables,
     check if quadratisation was respected. Checks if
@@ -84,16 +85,15 @@ def quad_error(sample, variables):
 
 #     return bit_string
 
-def nq_embedding(chains):
+def Nq_Embedding(chains):
     return len(list(itertools.chain(*chains)))
 
-import random
 
-def create_s(length):
-    real = np.array([random.randrange(-3,4,2) for p in range(0,length)])
-    im = np.array([random.randrange(-3,4,2) for p in range(0,length)])
+# def Create_S(length):
+#     real = np.array([random.randrange(-3,4,2) for p in range(0,length)])
+#     im = np.array([random.randrange(-3,4,2) for p in range(0,length)])
 
-    return real + im*1J
+#     return real + im*1J
 
 def Embedder(problem): # TODO:
     return 0

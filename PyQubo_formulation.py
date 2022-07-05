@@ -18,7 +18,7 @@ import itertools
 from Radio import *
 
 
-def float_approx(x, domain):
+def Float_Approx(x, domain):
     """
     Takes array of binary variables and/or values 'x' and 
     outputs an approximation of a float that lives in 'domain'.
@@ -31,10 +31,10 @@ def float_approx(x, domain):
     nq = len(x)
     
     low, high = domain
-    low = np.abs(low)
+    d = - low
     
     # scale
-    c = (high + low) / 2
+    c = (high + d) / 2
 
     # Powers of the binary vars
     powers = np.linspace(0, -int(nq-1), nq, dtype=int)
@@ -43,7 +43,7 @@ def float_approx(x, domain):
     coeff = 2*np.ones(nq)
     coeff = np.power(coeff, powers)
 
-    approx = c*np.dot(coeff, x) - low
+    approx = c*np.dot(coeff, x) - d
 
     return approx
 
@@ -57,28 +57,33 @@ def float_approx(x, domain):
 #         self.num_bin = num_bin_vars
 #         self.nq = nq_per_var
 
-def Create_float_vec(length, nq, domains):
+def Create_Float_Vec(length, nq, domains, var_name):
     """
     TODO: do nq per element bcs larger domains might
     need more qubits to achieve the same accuracy ?
     """
 
-    qubits = pq.Array.create('q', shape=(length*nq, ), vartype='BINARY')
+    qubits = pq.Array.create(str(var_name), shape=(length*nq, ), vartype='BINARY')
+
+    # get the variable names in qubits.. should find better way
+    empty = np.sum(qubits).compile()
+    bin_vars = empty.variables
 
     xtilde = np.zeros(length, dtype='object')
 
+    ## if domains contains just one domain:
     if len(domains.shape) == 1:
         for i in range(length):
-            xtilde[i] = float_approx(qubits[i*nq : nq*(i+1),], domains)
-    # accomodate for varying domains per element
+            xtilde[i] = Float_Approx(qubits[i*nq : nq*(i+1),], domains)
+    
+    ## accomodate for varying domains per element
     elif len(domains.shape) > 1:
         for i in range(length):
-            xtilde[i] = float_approx(qubits[i*nq : nq*(i+1),], domains[i])
+            xtilde[i] = Float_Approx(qubits[i*nq : nq*(i+1),], domains[i])
 
-    
     xtilde = pq.Array(xtilde)
 
-    return xtilde
+    return xtilde, bin_vars
 
 def L2(x):
     "Given a pyqubo array 'x', return its L2-norm."
@@ -129,7 +134,7 @@ def EVM(x, s, noise=True):
 
     return EVM
 
-def time_domain(xtilde, only_real=False):
+def Time_Dom(xtilde, only_real=False):
     """
     Given 'xtilde' (e.g. pyQubo array, but float arr should also work)
     understood as an array with its real and imaginary parts stacked
@@ -158,6 +163,7 @@ def time_domain(xtilde, only_real=False):
         F = np.array(F, dtype=float)
         F = pq.Array(F)
 
+    ## this was useful when testing
     else:
         size = int(len(xtilde))
 
@@ -166,55 +172,46 @@ def time_domain(xtilde, only_real=False):
         F = F.real
         F = pq.Array(F)
 
-
     # pyqubo syntax
     ytilde = F.matmul(xtilde)
 
     return ytilde
 
 
-def Max_Norm_LP(ytilde, gamma, muparams, kparams):
+def Max_Norm_LP(ytilde, mu, k_slack_vars, gamma):
     """
     Given 'ytilde' (e.g. pyQubo array but float array should also work)
-    return Linear Program equivalent of max-norm of xtilde in a unconstrained
+    return Linear Program equivalent of max-norm of ytilde in a unconstrained
     form, i.e. where all constraints are added to the objective.
 
-    gamma   :  penalty scalar for the sum of constraints.
-    muparams:  [nq_mu, mudomain]; mu is a slack that is the objective.
-    kparams :  [nq_k, kdomain]; k is a slack that replaces inequalities.
+    mu           :  mu is the objective to be minimised. Expected as pyqubo array.
+    k_slack_vars :  an array of slack variables k_n. k_n 'replace' inequalities.
+    gamma        :  penalty scalar for the sum of constraints.
     """
-
-    # create slack variables
-    nq_mu, mudomain = muparams
-    muarr = pq.Array.create('muq', shape=(nq_mu, ), vartype='BINARY')
-    muarr = float_approx(muarr, mudomain)
-
-    nq_k, kdomain = kparams
-    karr = pq.Array.create('kq', shape=(nq_k, ), vartype='BINARY')
-    karr = float_approx(karr, kdomain)
 
     # write each constraint into a vector
     term = np.zeros(len(ytilde), dtype='object')
+
     for i in range(len(ytilde)):
-        term[i] = (ytilde[i]**2 - muarr + karr)**2
+        term[i] = (ytilde[i]**2 + k_slack_vars[i] - mu)**2
 
     term = pq.Array(term)
 
     # max-norm as obj + gamma*constraints
-    max_norm = muarr + gamma*sum(term)
+    max_norm = mu + gamma*sum(term)
 
     return max_norm
 
-def Compile(problem, qubo=True):
+# def Compile(problem, qubo=True):
 
-    compiled = problem.compile()
+#     compiled = problem.compile()
 
-    if qubo is False:
-        compiled = compiled.to_ising(index_labels=True)
-    else:
-        compiled = compiled.to_qubo(index_labels=True)
+#     if qubo is False:
+#         compiled = compiled.to_ising(index_labels=True)
+#     else:
+#         compiled = compiled.to_qubo(index_labels=True)
     
-    return compiled
+#     return compiled
 
 if __name__ == "__main__":
     # trial = PyQUBO_Helpers(2,4)
