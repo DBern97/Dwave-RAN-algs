@@ -9,6 +9,7 @@ The reason for using PyQUBO instead of Sympy was PyQUBO's compile() and other he
 import numpy as np
 import sympy as sp 
 import pyqubo as pq
+import pandas as pd
 
 from sympy.physics.quantum import TensorProduct
 from scipy.linalg import dft
@@ -71,6 +72,8 @@ def Create_Float_Vec(length, nq, domains, var_name):
 
     xtilde = np.zeros(length, dtype='object')
 
+    # qubits = np.asarray(qubits, dtype='object')
+
     ## if domains contains just one domain:
     if len(domains.shape) == 1:
         for i in range(length):
@@ -81,7 +84,7 @@ def Create_Float_Vec(length, nq, domains, var_name):
         for i in range(length):
             xtilde[i] = Float_Approx(qubits[i*nq : nq*(i+1),], domains[i])
 
-    xtilde = pq.Array(xtilde)
+    # xtilde = pq.Array(xtilde)
 
     return xtilde, bin_vars
 
@@ -119,13 +122,15 @@ def EVM(x, s, noise=True):
     H_im = sp.im(H)
 
     # make H into block matrix to treat real and imaginary parts 'separately'
-    H = np.array(TensorProduct(T, H_im)) + np.array(TensorProduct(ID, H_re))
+    H = sp.Matrix(TensorProduct(T, H_im)) + sp.Matrix(TensorProduct(ID, H_re))
+    H = np.array(H, dtype=float)
     H = pq.Array(H)
+    
 
-    n = Gauss_noise(no_users)
+    n = Gauss_Noise(no_users)
     n = pq.Array(np.concatenate((n.real,n.imag)))
     if noise is False:
-        n = np.zeros(no_users)
+        n = np.zeros(2*no_users)
     else:
         None
 
@@ -202,18 +207,79 @@ def Max_Norm_LP(ytilde, mu, k_slack_vars, gamma):
 
     return max_norm
 
-# def Compile(problem, qubo=True):
 
-#     compiled = problem.compile()
 
-#     if qubo is False:
-#         compiled = compiled.to_ising(index_labels=True)
-#     else:
-#         compiled = compiled.to_qubo(index_labels=True)
+def My_Compile(model):
+
+    ## manually do the quadratisation
+
+    ## M_kl for each pari of variables q_kq_l
+
+    return compiled
+
+
+
+def Get_Low_E_Samples(data, e_threshold):
+    """
+    'data' is Pandas DataFrame of the samplet from annealing.
+    'e_threshold' is how far from lowest energy.
+    """
+    min_e = np.min(data['energy'])
     
-#     return compiled
+    
+    if e_threshold == 0:
+        min_e_idx = data[data['energy'] == min_e].index.tolist()
 
-if __name__ == "__main__":
-    # trial = PyQUBO_Helpers(2,4)
-    approximation = float_approx([-4,4], 4, 'binary')
-    print(approximation)
+    else:
+        min_e_idx = data[data['energy'] <= min_e + e_threshold*np.abs(min_e)].index.tolist()
+    
+    ## dataframe has variable names as headers
+    binaries = data.columns[:data.shape[1]-2]
+    
+    ## more useful for us as dictionary
+    min_e_samps_dict = data[binaries].to_dict('index')
+    
+    ## create an ndarray of such dictionaries
+    min_e_samps = np.asarray([min_e_samps_dict[k] for k in min_e_idx])
+    
+    return min_e_samps, data['energy'][min_e_idx]
+
+
+def Pq_Decode(data, domains, e_threshold):
+
+    samples, energies = Get_Low_E_Samples(data, e_threshold)
+
+    mu_domains, k_domains = domains
+
+    # mu_vars, k_vars = data
+
+    ## create mu
+
+    ## create ks
+
+    ## calculate quad errors 
+
+    ## add parameters [M, gamma_1, gamma_2]
+
+    ## add float accuracy
+
+    dictionaries = {'mu': 0, 'k': 0}
+
+    decoded_data = list(dictionaries)
+    
+    return decoded_data
+
+
+def pq_Analyse(decoded_data):
+
+    ## check constraints satisfied
+
+    ## covariance between some results/params
+
+    ## compute best result with some confidence measure
+
+    return analysis
+
+
+# if __name__ == "__main__":
+    # 
