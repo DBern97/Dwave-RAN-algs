@@ -19,6 +19,15 @@ import itertools
 from Radio import *
 
 
+def Num_Bin_For_Accuracy(decimal_accuracy, interval_size):
+
+    num_bin = -np.ceil(np.log2(decimal_accuracy / interval_size))
+
+    overshoot = np.abs(decimal_accuracy - interval_size*2**(-num_bin))
+
+    return num_bin, overshoot
+
+
 def Float_Approx(x, domain):
     """
     Takes array of binary variables and/or values 'x' and 
@@ -49,20 +58,16 @@ def Float_Approx(x, domain):
     return approx
 
 
-#might not have to be a class as they dont need to share any params here. 
-# its only later when comiling them together that a class is useful.
+## Might not have to be a class as they dont need to share any params here. 
+## Its only later when comiling them together that a class is useful.
 
-# class PyQUBO_Helpers:
-#     def __init__(self, num_bin_vars, nq_per_var):
-        
-#         self.num_bin = num_bin_vars
-#         self.nq = nq_per_var
 
 def Create_Float_Vec(length, nq, domains, var_name):
     """
     TODO: do nq per element bcs larger domains might
     need more qubits to achieve the same accuracy ?
     """
+    domains = np.asarray(domains)
 
     qubits = pq.Array.create(str(var_name), shape=(length*nq, ), vartype='BINARY')
 

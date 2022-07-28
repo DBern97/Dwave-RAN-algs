@@ -9,8 +9,8 @@ import matplotlib.gridspec as gridspec
 from sympy.physics.quantum import TensorProduct
 import itertools 
 
-from Radio import Channel_Rayleigh, Gauss_noise
-from PyQubo_formulation import PyQUBO_Helpers
+from Radio import Channel_Rayleigh, Gauss_Noise
+from PyQubo_formulation import *
 
 
 class Problemv2:
@@ -44,6 +44,36 @@ class Problemv2:
         problem = valid_fun[problem]
         
         return problem
+
+
+
+############################### REWRITTING THE ABOVE BELOW, TO ACCOUNT FOR N = # OF OFDM SUBCARRIERS. ###############################
+
+
+
+class Make_Problem:
+    def __init__(self, MIMO_params, nq_per_var, message):
+        
+        self.K, self.M, self.N = MIMO_params
+
+        self.nqx, self.nqk, self.nqmu = nq_per_var
+
+        self.s = message ## augmented so containts [s_1^T, s_2^T, ..., s_K^T]
+    
+    ## User might want to change 'nq_per_var' without running the whole method again.
+    @property
+    def nq_specs(self):
+        return self.nqx, self.nqk, self.nqmu
+    
+    @nq_specs.setter
+    def nq_specs(self, nqx_val, nqk_val, nqmu_val):
+        self.nqx, self.nqk, self.nqmu = nqx_val, nqk_val, nqmu_val
+    
+    def Get_Problem(self):
+
+        return []
+
+
 
 if __name__ == "__main__":
     s = np.array([1-1J, 3+1J], dtype=complex)
